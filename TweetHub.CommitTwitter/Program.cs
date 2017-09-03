@@ -12,12 +12,12 @@ namespace TweetHub.CommitTwitter
     {
         public static async Task Main(string[] args)
         {
-            (AppOptions app, GitHubOptions github) = BuildOptions(args);
-            await new Executor(app, github).ExecuteAsync();
+            (AppOptions app, GitHubOptions github, TwitterOptions twitter) = BuildOptions(args);
+            await new Executor(app, github, twitter).ExecuteAsync();
             Console.ReadKey();
         }
 
-        private static (AppOptions, GitHubOptions) BuildOptions(string[] args)
+        private static (AppOptions, GitHubOptions, TwitterOptions) BuildOptions(string[] args)
         {
             // build options
             IConfigurationRoot root = new ConfigurationBuilder()
@@ -32,7 +32,10 @@ namespace TweetHub.CommitTwitter
             var gitHubOption = new GitHubOptions();
             root.GetSection("GitHub").Bind(gitHubOption);
 
-            return (appOption, gitHubOption);
+            var twitterOption = new TwitterOptions();
+            root.GetSection("Twitter").Bind(twitterOption);
+
+            return (appOption, gitHubOption, twitterOption);
         }
     }
 
@@ -40,11 +43,13 @@ namespace TweetHub.CommitTwitter
     {
         private readonly AppOptions _appOption;
         private readonly GitHubOptions _gitHubOption;
+        private readonly TwitterOptions _twitterOption;
 
-        internal Executor(AppOptions appOption, GitHubOptions gitHubOption)
+        internal Executor(AppOptions appOption, GitHubOptions gitHubOption, TwitterOptions twitterOption)
         {
             _appOption = appOption;
             _gitHubOption = gitHubOption;
+            _twitterOption = twitterOption;
         }
 
         internal async Task ExecuteAsync()
@@ -56,11 +61,15 @@ namespace TweetHub.CommitTwitter
             
             var result = string.Join(Environment.NewLine, commitsDic.Select(p => $"{p.Key}: {p.Value}"));
 
-            Console.WriteLine($@"{header}
+            var text = $@"{header}
 
 total: {commitsDic.Sum(p => p.Value)} commits
 {result}
-https://github.com/{_gitHubOption.AuthorName}");
+https://github.com/{_gitHubOption.AuthorName}";
+
+            Console.WriteLine(text);
+
+            await this.CreateTwitterClient().TweetAsync(text);
         }
 
         private async Task<IEnumerable<GitHubRepository>> GetUserRepositoriesAsync()
@@ -92,9 +101,14 @@ https://github.com/{_gitHubOption.AuthorName}");
             return tasks.Select(t => t.Result).OrderByDescending(p => p.Value).ToList();
         }
 
-        private GitHubClient CreateGitHubClient()
+        private IGitHubClient CreateGitHubClient()
         {
             return new GitHubClient(_gitHubOption.Token);
+        }
+
+        private ITwitterClient CreateTwitterClient()
+        {
+            return new TwitterClient(_twitterOption.ApiKey, _twitterOption.ApiKeySecret, _twitterOption.AccessToken, _twitterOption.AccessTokenSecret);
         }
     }
 }

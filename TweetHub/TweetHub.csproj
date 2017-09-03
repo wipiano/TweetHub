@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CoreTweet" Version="0.8.0.384" />
     <PackageReference Include="MicroResolver" Version="2.3.4" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
   </ItemGroup>

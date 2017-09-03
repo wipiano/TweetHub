@@ -5,6 +5,12 @@
     },
     "GitHub": {
         "Token": "Enter your access token",
-        "AuthorName": "wipiano" 
-    }
+        "AuthorName": "wipiano"
+    },
+    "Twitter": {
+        "ApiKey": "Enter your ApiKey",
+        "ApiKeySecret": "Enter your ApiKeySecret", 
+        "AccessToken": "Enter your access token",
+        "AccessTokenSecret": "Enter your access token secret"
+    } 
 }

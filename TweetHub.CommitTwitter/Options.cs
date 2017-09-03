@@ -15,4 +15,15 @@ namespace TweetHub.CommitTwitter
 
         public string AuthorName { get; set; }
     }
+
+    public class TwitterOptions
+    {
+        public string ApiKey { get; set; }
+
+        public string ApiKeySecret { get; set; }
+
+        public string AccessToken { get; set; }
+
+        public string AccessTokenSecret { get; set; }
+    }
 }
