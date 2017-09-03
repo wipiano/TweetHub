@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using TweetHub.Models;
 
 namespace TweetHub.CommitTwitter
@@ -49,19 +49,47 @@ namespace TweetHub.CommitTwitter
 
         internal async Task ExecuteAsync()
         {
-            var githubClient = this.CreateGitHubClient();
+            var repositories = await this.GetUserRepositoriesAsync();
+            var commitsDic = await this.GetCommitCountsAsync(repositories);
 
-            var repositories = (await githubClient.GetUserRepositoriesAsync())
-                .Where(this.IsTarget);
+            var header = $"{_gitHubOption.AuthorName}'s commit {_appOption.TargetDate:yy/MM/dd}";
             
-            var result = string.Join(", ", repositories.Select(r => r.name));
+            var result = string.Join(Environment.NewLine, commitsDic.Select(p => $"{p.Key}: {p.Value}"));
 
-            Console.WriteLine(result);
+            Console.WriteLine($@"{header}
+
+total: {commitsDic.Sum(p => p.Value)} commits
+{result}
+https://github.com/{_gitHubOption.AuthorName}");
         }
 
-        private bool IsTarget(GitHubRepository repository)
+        private async Task<IEnumerable<GitHubRepository>> GetUserRepositoriesAsync()
         {
-            return _appOption.TargetDate.Date == DateTime.Parse(repository.pushed_at).AddHours(_appOption.TimeDiff).Date;
+            bool IsTarget(GitHubRepository repository)
+                => _appOption.TargetDate.Date <= DateTime.Parse(repository.pushed_at).AddHours(_appOption.TimeDiff).Date;
+
+            var client = this.CreateGitHubClient();
+            return (await client.GetUserRepositoriesAsync())
+                .Where(IsTarget);
+        }
+
+        private async Task<List<KeyValuePair<string, int>>> GetCommitCountsAsync(IEnumerable<GitHubRepository> repos)
+        {
+            var client = this.CreateGitHubClient();
+            DateTime begin = _appOption.TargetDate.Date.AddHours(-_appOption.TimeDiff);
+            DateTime end = begin.AddDays(1);
+            string author = _gitHubOption.AuthorName;
+
+            async Task<KeyValuePair<string, int>> GetInner(GitHubRepository r)
+            {
+                int count = await client.GetCommitCountAsync(r.full_name, begin, end, author);
+                return new KeyValuePair<string, int>(r.name, count);
+            }
+
+            var tasks = repos.Select(async r => await GetInner(r)).ToList();
+            await Task.WhenAll(tasks);
+
+            return tasks.Select(t => t.Result).OrderByDescending(p => p.Value).ToList();
         }
 
         private GitHubClient CreateGitHubClient()

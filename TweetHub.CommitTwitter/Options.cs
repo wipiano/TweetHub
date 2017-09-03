@@ -12,5 +12,7 @@ namespace TweetHub.CommitTwitter
     public class GitHubOptions
     {
         public string Token { get; set; }
+
+        public string AuthorName { get; set; }
     }
 }
