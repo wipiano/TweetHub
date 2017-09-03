@@ -25,7 +25,7 @@ namespace TweetHub
 
         public async Task<IEnumerable<GitHubRepository>> GetUserRepositoriesAsync()
         {
-            var url = $"https://api.github.com/user/repos";
+            var url = $"https://api.github.com/user/repos?sort=pushed&direction=desc";
 
             string result;
 
@@ -35,6 +35,19 @@ namespace TweetHub
             }
 
             return JsonConvert.DeserializeObject<List<GitHubRepository>>(result);
+        }
+
+        public async Task<int> GetCommitCountAsync(string fullName, DateTime begin, DateTime end, string author)
+        {
+            var url = $"https://api.github.com/repos/{fullName}/commits?since={begin:O}Z&until={end:O}Z&author={author}";
+
+            using (var client = this.CreateWebClient(url))
+            {
+                var result = await client.DownloadStringTaskAsync($"{url}");
+                var commits = JsonConvert.DeserializeObject<List<GitHubCommit>>(result);
+
+                return commits.Count;
+            }
         }
 
         private WebClient CreateWebClient(string url)

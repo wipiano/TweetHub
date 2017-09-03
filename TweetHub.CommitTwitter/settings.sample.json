@@ -4,6 +4,7 @@
         "TimeDiff": 9 
     },
     "GitHub": {
-        "Token": "Enter your access token"
+        "Token": "Enter your access token",
+        "AuthorName": "wipiano" 
     }
 }
