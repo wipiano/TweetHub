@@ -1,0 +1,9 @@
+﻿{
+    "App" : {
+        "TargetDate": "2017-09-03",
+        "TimeDiff": 9 
+    },
+    "GitHub": {
+        "Token": "Enter your access token"
+    }
+}
