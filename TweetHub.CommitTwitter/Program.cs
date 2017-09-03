@@ -12,17 +12,12 @@ namespace TweetHub.CommitTwitter
     {
         public static async Task Main(string[] args)
         {
-            await new Executor(args).ExecuteAsync();
+            (AppOptions app, GitHubOptions github) = BuildOptions(args);
+            await new Executor(app, github).ExecuteAsync();
             Console.ReadKey();
         }
-    }
 
-    internal class Executor
-    {
-        private readonly AppOptions _appOption;
-        private readonly GitHubOptions _gitHubOption;
-
-        internal Executor(string[] args)
+        private static (AppOptions, GitHubOptions) BuildOptions(string[] args)
         {
             // build options
             IConfigurationRoot root = new ConfigurationBuilder()
@@ -31,14 +26,25 @@ namespace TweetHub.CommitTwitter
                 .AddCommandLine(args)
                 .Build();
 
-            _appOption = new AppOptions();
-            root.GetSection("App").Bind(_appOption);
+            var appOption = new AppOptions();
+            root.GetSection("App").Bind(appOption);
 
-            _gitHubOption = new GitHubOptions();
-            root.GetSection("GitHub").Bind(_gitHubOption);
+            var gitHubOption = new GitHubOptions();
+            root.GetSection("GitHub").Bind(gitHubOption);
 
-            Console.WriteLine(JsonConvert.SerializeObject(_appOption, Formatting.Indented));
-            Console.WriteLine(JsonConvert.SerializeObject(_gitHubOption, Formatting.Indented));
+            return (appOption, gitHubOption);
+        }
+    }
+
+    internal class Executor
+    {
+        private readonly AppOptions _appOption;
+        private readonly GitHubOptions _gitHubOption;
+
+        internal Executor(AppOptions appOption, GitHubOptions gitHubOption)
+        {
+            _appOption = appOption;
+            _gitHubOption = gitHubOption;
         }
 
         internal async Task ExecuteAsync()

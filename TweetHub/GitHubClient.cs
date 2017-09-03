@@ -34,8 +34,6 @@ namespace TweetHub
                 result = await client.DownloadStringTaskAsync($"{url}");
             }
 
-            Console.WriteLine(result);
-
             return JsonConvert.DeserializeObject<List<GitHubRepository>>(result);
         }
 
